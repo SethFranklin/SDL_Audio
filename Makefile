@@ -1,5 +1,5 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = main.cpp glad/glad.c
+OBJS = main.cpp input.cpp glad/glad.c
 
 #CC specifies which compiler we're using
 CC = g++

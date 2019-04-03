@@ -2,19 +2,26 @@
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <cstdint>
+#include <chrono>
 
 #include "glad/glad.h"
-
-unsigned int Width = 640;
-unsigned int Height = 480;
+#include "main.h"
+#include "input.h"
 
 SDL_Window* Window;
 SDL_GLContext Context;
 
+bool Running = true;
+std::chrono::duration<double> StartupTime;
+
 const uint32_t Window_Flags = SDL_WINDOW_OPENGL;
+const unsigned int TargetFPS = 60;
 
 int main()
 {
+
+	Main::Width = 640;
+	Main::Height = 480;
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
@@ -24,7 +31,7 @@ int main()
 
 	}
 
-	Window = SDL_CreateWindow("Audio Demo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Width, Height, Window_Flags);
+	Window = SDL_CreateWindow("Audio Demo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Main::Width, Main::Height, Window_Flags);
 
 	if (Window == NULL)
 	{
@@ -54,18 +61,88 @@ int main()
 
 	//glEnable();
 
-	glViewport(0, 0, Width, Height);
-	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glViewport(0, 0, Main::Width, Main::Height);
 
-	SDL_GL_SwapWindow(Window);
+	auto StartupTime = std::chrono::high_resolution_clock::now();
+	auto LastFrame = StartupTime;
 
-	SDL_Delay(5000);
+	std::chrono::duration<double> TargetFrameTime = std::chrono::nanoseconds(long(1000000000) / long(TargetFPS));
 
+	while (Running)
+	{
+
+		auto CurrentFrame = std::chrono::high_resolution_clock::now();
+
+		auto dt = CurrentFrame - LastFrame;
+
+		if (dt >= TargetFrameTime)
+		{
+
+			LastFrame = CurrentFrame;
+
+			Main::DeltaTime = dt.count() / 1000000000.0;
+			Main::TimeSinceStart = (CurrentFrame - StartupTime).count() / 1000000000.0;
+
+			// Events
+
+			SDL_Event Event;
+
+			while (SDL_PollEvent(&Event))
+			{
+
+				switch (Event.type)
+				{
+
+					case SDL_WINDOWEVENT:
+						switch (Event.window.event)
+						{
+
+							case SDL_WINDOWEVENT_CLOSE:
+								Main::Close();
+								break;
+
+						}
+					break;
+					case SDL_KEYDOWN:
+						if (Event.key.keysym.sym < 128) Input::SetState(Event.key.keysym.sym, true);
+					break;
+					case SDL_KEYUP:
+						if (Event.key.keysym.sym < 128) Input::SetState(Event.key.keysym.sym, false);
+					break;
+
+				}
+
+			}
+
+			// Update
+			
+			// Push back inputs
+
+			Input::PushBackInputs();
+
+			// Render
+
+			double Amp = (sin(Main::TimeSinceStart) + 1.0) * 0.5;
+			glClearColor(Amp, Amp, Amp, 1.0);
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			SDL_GL_SwapWindow(Window);
+
+		}
+
+	}
+	
 	SDL_GL_DeleteContext(Context);
 	SDL_DestroyWindow(Window);
 	SDL_Quit();
 
 	return 0;
+
+}
+
+void Main::Close()
+{
+
+	Running = false;
 
 }
