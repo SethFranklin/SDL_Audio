@@ -7,6 +7,7 @@
 #include "glad/glad.h"
 #include "main.h"
 #include "input.h"
+#include "shader.h"
 
 SDL_Window* Window;
 SDL_GLContext Context;
@@ -56,10 +57,12 @@ int main()
 	}
 
 	gladLoadGLLoader(SDL_GL_GetProcAddress);
+	
+	Shader shad = Shader(std::string("simple"), (const Shader::Uniform[]) {Shader::Uniform::ROTATE}); 
 
 	std::cout << "OpenGL Loaded. " << std::endl << "Vendor: " << glGetString(GL_VENDOR) << std::endl << "Renderer: " << glGetString(GL_RENDERER) << std::endl << "Version: " << glGetString(GL_VERSION) << std::endl;
 
-	//glEnable();
+	//glEnable(); depth test?
 
 	glViewport(0, 0, Main::Width, Main::Height);
 
